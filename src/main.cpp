@@ -1,7 +1,5 @@
-//#include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <HTTPClient.h>
 #include <M5Stack.h>
 
 #include "password.h"
@@ -12,7 +10,6 @@ const char* udp_address = "192.168.0.255";
 const int udp_port = 3333;
 bool wifi_connected = false;
 
-HTTPClient http;
 WiFiUDP udp;
 
 void connect_WiFi(){
@@ -33,8 +30,16 @@ void setup() {
 
     // WIFI接続完了を待つ
     connect_WiFi();
+
+    // Initialize UDP state
+    udp.begin(WiFi.localIP(),udp_port);
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
+
+    udp.beginPacket();
+    udp.print("poipoi~");
+    udp.endPacket();
+    delay(2000);
 }
