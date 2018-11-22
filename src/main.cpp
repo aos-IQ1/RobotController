@@ -1,12 +1,13 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <M5Stack.h>
+#include <cstdio>
 
 #include "password.h"
 
 const char* ssid = SSID;
 const char* password = PASSWORD;
-const char* udp_address = "192.168.0.255";
+const char* udp_address = "192.168.120.116";
 const int udp_port = 3333;
 bool wifi_connected = false;
 
@@ -41,5 +42,6 @@ void loop() {
     udp.beginPacket(udp_address,udp_port);
     udp.print("poipoi~");
     udp.endPacket();
+    M5.Lcd.println("Looping");
     delay(2000);
 }
