@@ -32,13 +32,13 @@ void setup() {
     connect_WiFi();
 
     // Initialize UDP state
-    udp.begin(WiFi.localIP(),udp_port);
+    udp.begin(udp_port);
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
 
-    udp.beginPacket();
+    udp.beginPacket(udp_address,udp_port);
     udp.print("poipoi~");
     udp.endPacket();
     delay(2000);
