@@ -24,6 +24,23 @@ void connect_WiFi(){
     M5.Lcd.println("WiFi Connected!");
 }
 
+void button_controller(){
+    udp.beginPacket(udp_address,udp_port);
+    if(M5.BtnA.wasPressed()){
+        udp.print("A");
+        Serial.println("ButtonA is Pressed");
+    }
+    if(M5.BtnB.wasPressed()){
+        udp.print("B");
+        Serial.println("ButtonB is Pressed");
+    }
+    if(M5.BtnC.wasPressed()){
+        udp.print("C");
+        Serial.println("ButtonC is Pressed");
+    }
+    udp.endPacket();
+}
+
 
 void setup() {
     Serial.begin(115200);
@@ -40,20 +57,12 @@ void setup() {
 void loop() {
     // put your main code here, to run repeatedly:
     M5.update();
-    udp.beginPacket(udp_address,udp_port);
-    if(M5.BtnA.wasPressed()){
-        udp.print("A");
-        Serial.println("ButtonA is Pressed");
-    }
-    if(M5.BtnB.wasPressed()){
-        udp.print("B");
-        Serial.println("ButtonB is Pressed");
-    }
-    if(M5.BtnC.wasPressed()){
-        udp.print("C");
-        Serial.println("ButtonC is Pressed");
-    }
-    udp.endPacket();
     M5.Lcd.println("Looping");
+
+    /* ボタンを使ったコントローラ */
+    button_controller();
+
+    /* 加速度センサを使ったコントローラ */
+
     delay(200);
 }
