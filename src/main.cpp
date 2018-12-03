@@ -69,28 +69,6 @@ void acc_sensor_controller(){
     M5.Lcd.println((int)IMU.gy);
     M5.Lcd.print("az = ");
     M5.Lcd.println((int)IMU.gz);
-    /*
-    if (IMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01){
-        IMU.readAccelData(IMU.accelCount);
-        IMU.getAres();  // IMU.aresが更新される ares : Scale resolutions per LSB for the sensors
-
-        IMU.ax = (float)IMU.accelCount[0] * IMU.aRes; // - accelBias[0];
-        IMU.ay = (float)IMU.accelCount[1] * IMU.aRes; // - accelBias[1];
-        IMU.az = (float)IMU.accelCount[2] * IMU.aRes; // - accelBias[2];
-    }
-    IMU.updateTime();
-
-    IMU.delt_t = millis() - IMU.count;
-    M5.Lcd.print("ax = ");
-    M5.Lcd.print((int)1000 * IMU.ax);
-    M5.Lcd.print(" ay = ");
-    M5.Lcd.print((int)1000 * IMU.ay);
-    M5.Lcd.print(" az = ");
-    M5.Lcd.print((int)1000 * IMU.az);
-    M5.Lcd.println(" mg");
-
-    IMU.count = millis();
-    */
 }
 
 void setup() {
