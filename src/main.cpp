@@ -14,8 +14,10 @@ const int udp_port = 3333;
 bool wifi_connected = false;
 
 WiFiUDP udp;
-
 MPU9250 IMU;
+
+int last_time=0;
+float rotate = 0;
 
 void connect_WiFi(){
     WiFi.disconnect(true);
@@ -63,12 +65,16 @@ void acc_sensor_controller(){
         IMU.gz = (float)IMU.gyroCount[2] * IMU.gRes;
     }
     IMU.updateTime();
-    M5.Lcd.print("ax = ");
-    M5.Lcd.println((int)IMU.gx);
-    M5.Lcd.print("ay = ");
-    M5.Lcd.println((int)IMU.gy);
-    M5.Lcd.print("az = ");
-    M5.Lcd.println((int)IMU.gz);
+
+    int time_diff = millis() - last_time;
+    rotate += (int)(time_diff * IMU.gz / 1000.0);
+
+    int sx = 160, sy = 120;
+    float rad = rotate / 180.0 * PI;
+    int gx = sx - 100 * sin(rad);
+    int gy = sy - 100 * cos(rad);
+    M5.Lcd.drawLine(sx,sy,gx,gy,WHITE);
+    last_time = millis();
 }
 
 void setup() {
@@ -89,19 +95,19 @@ void setup() {
     // センサーの初期化
     IMU.calibrateMPU9250(IMU.gyroBias,IMU.accelBias);
     IMU.initMPU9250();
+    last_time = millis();
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0,0);
-    //M5.update();
-    M5.Lcd.println("Looping");
+    M5.update();
 
     /* ボタンを使ったコントローラ */
     //button_controller();
 
     /* 加速度センサを使ったコントローラ */
     acc_sensor_controller();
-    delay(1000);
+    delay(200);
 }
