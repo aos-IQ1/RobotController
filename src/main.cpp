@@ -15,7 +15,7 @@
 
 const char* ssid = SSID;
 const char* password = PASSWORD;
-const char* udp_address = "192.168.43.12";
+const char* udp_address = "192.168.100.121";
 const int udp_port = 3333;
 bool wifi_connected = false;
 
@@ -27,20 +27,29 @@ float rotatex=0;
 float rotatey=0;
 float rotatez=0;
 int last_region=-1;
+int gxlast = 0, gylast = 0;
 
 /*
-  M_OJIGI         = 0x0B80, // M001  お辞儀
-  M_HOME_POSITION = 0x1380, // M002  ホームhポジション
-  M_PRE_WALK      = 0x1B80, // M003  PreWalk
-  M_WALKL         = 0x2380, // M004  WalkL
-  M_WALKR         = 0x2B80, // M005  WalkR
-  M_POST_WALKR    = 0x3380, // M005  PostWalkR
-  M_POST_WALKL    = 0x3B80, // M005  PostWalkL
+  M_OJIGI         = 0x0B80, // お辞儀
+  M_HOME_POSITION = 0x1380, // ホームhポジション
+                            // WALK
+  M_TO_LEFT       = 0x3380, // To left
+  M_TO_RIGHT      = 0x3B80, // To right
+  M_TURN_LEFT     = 0x4380, // Turn left
+  M_TURN_RIGHT    = 0x4B80, // Turn right
+  M_GET_UP_U      = 0x5380, // 起き上がり うつぶせ
+  M_GET_UP_A      = 0x5B80, // M011  起き上がり 仰向け
+  M_PUNCHL        = 0x6380, // M012  横パンチ左
+  M_PUNCHR        = 0x6B80, // M013  横パンチ右
+  M_UTUBUSE       = 0x7380, // M014  うつ伏せ
+  M_AOMUKE        = 0x7B80, // M015  仰向け
+  M_WAVE_HAND     = 0x8380, // M016  手を振る
 */
 
-const int motion_num = 7;
+const int motion_num = 14;
 int motion_index = 0;
-String motions[] = {"Bow","Home Position","Pre Walk","WalkL","WalkR","PostWalkR","PostWalkL"};
+String motions[] = {"Bow","Home Position","Walk","To left","To right","Turn left",
+                    "Turn right","GetUp A","GetUp B","Punch left","Punch right","Prone","Lie","Wave"};
 
 void connect_WiFi(){
     WiFi.disconnect(true);
@@ -67,7 +76,9 @@ void button_controller(){
     }else if(M5.BtnC.isPressed()){
         motion_index = (motion_index+1)%motion_num;
     }else if(M5.BtnB.wasPressed()){
-        udp.print(motion_index);
+        Serial.println(motion_index);
+        char s = 'a' + motion_index;
+        udp.print(s);
     }
     udp.endPacket();
 
@@ -112,32 +123,35 @@ void acc_sensor_controller(){
     float rad = rotatez / 180.0 * PI;
     int gx = sx - 100 * sin(rad);
     int gy = sy - 100 * cos(rad);
-    M5.Lcd.drawLine(sx,sy,gx,gy,WHITE);
+    if(gx != gxlast || gy != gylast){
+        M5.Lcd.fillScreen(BLACK);
+        M5.Lcd.drawLine(sx,sy,gx,gy,WHITE);
+        gxlast = gx;
+        gylast = gy;
+    }
     last_time = millis();
 
     int region = (gx < sx) ? 0 : 1; 
-    M5.Lcd.setCursor(0,0);
-    //M5.Lcd.print("rotateX : "); M5.Lcd.println(rotatex);
-    //M5.Lcd.print("rotateY : "); M5.Lcd.println(rotatey);
-    //M5.Lcd.print("rotateZ : "); M5.Lcd.println(rotatez);
+    if(gx < sx && gy < sy){
+        region = 0;
+    }else if(gx < sx && gy >= sy){
+        region = 1;
+    }else if(gx >= sx && gy < sy){
+        region = 2;
+    }else{
+        region = 3;
+    }
 
-    
-    udp.beginPacket(udp_address,udp_port);
-    udp.println("G");
-    udp.println(rotatex);
-    udp.println(rotatey);
-    udp.println(rotatez);
-    udp.endPacket();
-
-    M5.Lcd.print("Region : "); M5.Lcd.println(region);
-
-    /* if (last_region != region){
+    if (last_region != region){
+        M5.Lcd.setCursor(0,0);
         M5.Lcd.println("Send Packet");
         udp.beginPacket(udp_address,udp_port);
-        udp.print(region);
+        char sendm = 'A' + region;
+        Serial.println(sendm);
+        udp.print(sendm);
         udp.endPacket();
         last_region = region;
-    } */
+    }
 }
 
 #endif
