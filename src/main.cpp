@@ -7,11 +7,15 @@
 
 #include "password.h"
 
+#if 0
 #define GyroController
+#else
+#define ButtonController
+#endif
 
 const char* ssid = SSID;
 const char* password = PASSWORD;
-const char* udp_address = "192.168.43.237";
+const char* udp_address = "192.168.43.12";
 const int udp_port = 3333;
 bool wifi_connected = false;
 
@@ -21,6 +25,20 @@ MPU9250 IMU;
 int last_time=0;
 float rotate=0;
 int last_region=-1;
+
+/*
+  M_OJIGI         = 0x0B80, // M001  お辞儀
+  M_HOME_POSITION = 0x1380, // M002  ホームhポジション
+  M_PRE_WALK      = 0x1B80, // M003  PreWalk
+  M_WALKL         = 0x2380, // M004  WalkL
+  M_WALKR         = 0x2B80, // M005  WalkR
+  M_POST_WALKR    = 0x3380, // M005  PostWalkR
+  M_POST_WALKL    = 0x3B80, // M005  PostWalkL
+*/
+
+const int motion_num = 7;
+int motion_index = 0;
+String motions[] = {"Bow","Home Position","Pre Walk","WalkL","WalkR","PostWalkR","PostWalkL"};
 
 void connect_WiFi(){
     WiFi.disconnect(true);
@@ -36,24 +54,30 @@ void connect_WiFi(){
         }
     }
     M5.Lcd.println("WiFi Connected!");
+    M5.Lcd.fillScreen(BLACK);
 }
 
 #ifdef ButtonController
 void button_controller(){
     udp.beginPacket(udp_address,udp_port);
     if(M5.BtnA.wasPressed()){
-        udp.print("A");
-        Serial.println("ButtonA is Pressed");
-    }
-    if(M5.BtnB.wasPressed()){
-        udp.print("B");
-        Serial.println("ButtonB is Pressed");
-    }
-    if(M5.BtnC.wasPressed()){
-        udp.print("C");
-        Serial.println("ButtonC is Pressed");
+        motion_index = (motion_index-1+motion_num)%motion_num;
+    }else if(M5.BtnC.isPressed()){
+        motion_index = (motion_index+1)%motion_num;
+    }else if(M5.BtnB.wasPressed()){
+        udp.print(motion_index);
     }
     udp.endPacket();
+
+    M5.Lcd.setCursor(0,0);
+    for(int i=0;i<motion_num;i++){
+        if(i==motion_index){
+            M5.Lcd.print("-> ");
+        }else{
+            M5.Lcd.print("   ");
+        }
+        M5.Lcd.println(motions[i]);
+    }
 }
 #endif
 
@@ -108,6 +132,7 @@ void setup() {
     Wire.begin();
     Serial.println("Start");
 
+    M5.Lcd.setTextFont(2);
     M5.Lcd.println("This is Robot Controller");
 
     delay(200);
@@ -125,14 +150,22 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    M5.Lcd.fillScreen(BLACK);
-    M5.Lcd.setCursor(0,0);
+    //M5.Lcd.fillScreen(BLACK);
+    //Serial.println("loop");
 
     /* ボタンを使ったコントローラ */
-    //button_controller();
+    #ifdef ButtonController
+    button_controller();
+    #endif
 
     /* 加速度センサを使ったコントローラ */
+    #ifdef GyroController
     acc_sensor_controller();
+    #endif
     M5.update();
+    #ifdef GyroController
     delay(200);
+    #else
+    delay(200);
+    #endif
 }
