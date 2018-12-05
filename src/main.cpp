@@ -7,9 +7,11 @@
 
 #include "password.h"
 
+#define GyroController
+
 const char* ssid = SSID;
 const char* password = PASSWORD;
-const char* udp_address = "192.168.120.116";
+const char* udp_address = "192.168.43.237";
 const int udp_port = 3333;
 bool wifi_connected = false;
 
@@ -17,19 +19,26 @@ WiFiUDP udp;
 MPU9250 IMU;
 
 int last_time=0;
-float rotate = 0;
+float rotate=0;
+int last_region=-1;
 
 void connect_WiFi(){
     WiFi.disconnect(true);
     WiFi.begin(ssid,password);
 
+    int try_connect_count = 0;
     while(WiFi.status() != WL_CONNECTED){
         delay(1000);
         M5.Lcd.println("WiFi connecting...");
+        if((++try_connect_count) % 5 == 0){
+            WiFi.disconnect(true);
+            WiFi.begin(ssid,password);
+        }
     }
     M5.Lcd.println("WiFi Connected!");
 }
 
+#ifdef ButtonController
 void button_controller(){
     udp.beginPacket(udp_address,udp_port);
     if(M5.BtnA.wasPressed()){
@@ -46,7 +55,9 @@ void button_controller(){
     }
     udp.endPacket();
 }
+#endif
 
+#ifdef GyroController
 void acc_sensor_controller(){
     if (IMU.readByte(MPU9250_ADDRESS, INT_STATUS) & 0x01)
     {
@@ -75,22 +86,36 @@ void acc_sensor_controller(){
     int gy = sy - 100 * cos(rad);
     M5.Lcd.drawLine(sx,sy,gx,gy,WHITE);
     last_time = millis();
+
+    int region = (gx < sx) ? 0 : 1; 
+    M5.Lcd.print("Region : "); M5.Lcd.println(region);
+
+    if (last_region != region){
+        M5.Lcd.println("Send Packet");
+        udp.beginPacket(udp_address,udp_port);
+        udp.print(region);
+        udp.endPacket();
+        last_region = region;
+    }
 }
 
+#endif
+
 void setup() {
-    delay(200);
     Serial.begin(115200);
+    delay(1000);
     M5.begin();
     Wire.begin();
     Serial.println("Start");
 
     M5.Lcd.println("This is Robot Controller");
 
+    delay(200);
     // WIFI接続完了を待つ
-    //connect_WiFi();
+    connect_WiFi();
 
     // Initialize UDP state
-    //udp.begin(udp_port);
+    udp.begin(udp_port);
 
     // センサーの初期化
     IMU.calibrateMPU9250(IMU.gyroBias,IMU.accelBias);
@@ -102,12 +127,12 @@ void loop() {
     // put your main code here, to run repeatedly:
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0,0);
-    M5.update();
 
     /* ボタンを使ったコントローラ */
     //button_controller();
 
     /* 加速度センサを使ったコントローラ */
     acc_sensor_controller();
+    M5.update();
     delay(200);
 }
