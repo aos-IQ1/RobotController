@@ -7,7 +7,7 @@
 
 #include "password.h"
 
-#if 0
+#if 1
 #define GyroController
 #else
 #define ButtonController
@@ -23,7 +23,9 @@ WiFiUDP udp;
 MPU9250 IMU;
 
 int last_time=0;
-float rotate=0;
+float rotatex=0;
+float rotatey=0;
+float rotatez=0;
 int last_region=-1;
 
 /*
@@ -102,25 +104,40 @@ void acc_sensor_controller(){
     IMU.updateTime();
 
     int time_diff = millis() - last_time;
-    rotate += (int)(time_diff * IMU.gz / 1000.0);
+    rotatex += (int)(time_diff * IMU.gx / 1000.0);
+    rotatey += (int)(time_diff * IMU.gy / 1000.0);
+    rotatez += (int)(time_diff * IMU.gz / 1000.0);
 
     int sx = 160, sy = 120;
-    float rad = rotate / 180.0 * PI;
+    float rad = rotatez / 180.0 * PI;
     int gx = sx - 100 * sin(rad);
     int gy = sy - 100 * cos(rad);
     M5.Lcd.drawLine(sx,sy,gx,gy,WHITE);
     last_time = millis();
 
     int region = (gx < sx) ? 0 : 1; 
+    M5.Lcd.setCursor(0,0);
+    //M5.Lcd.print("rotateX : "); M5.Lcd.println(rotatex);
+    //M5.Lcd.print("rotateY : "); M5.Lcd.println(rotatey);
+    //M5.Lcd.print("rotateZ : "); M5.Lcd.println(rotatez);
+
+    
+    udp.beginPacket(udp_address,udp_port);
+    udp.println("G");
+    udp.println(rotatex);
+    udp.println(rotatey);
+    udp.println(rotatez);
+    udp.endPacket();
+
     M5.Lcd.print("Region : "); M5.Lcd.println(region);
 
-    if (last_region != region){
+    /* if (last_region != region){
         M5.Lcd.println("Send Packet");
         udp.beginPacket(udp_address,udp_port);
         udp.print(region);
         udp.endPacket();
         last_region = region;
-    }
+    } */
 }
 
 #endif
