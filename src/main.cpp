@@ -44,12 +44,15 @@ int gxlast = 0, gylast = 0;
   M_UTUBUSE       = 0x7380, // M014  うつ伏せ
   M_AOMUKE        = 0x7B80, // M015  仰向け
   M_WAVE_HAND     = 0x8380, // M016  手を振る
+  M_KUSSHIN       = 0x9B80, // M017  屈伸
+  M_UDETATE       = 0xA380, // M018  腕立て伏せ
 */
 
-const int motion_num = 14;
+const int motion_num = 16;
 int motion_index = 0;
 String motions[] = {"Bow","Home Position","Walk","To left","To right","Turn left",
-                    "Turn right","GetUp A","GetUp B","Punch left","Punch right","Prone","Lie","Wave"};
+                    "Turn right","GetUp U","GetUp A","Punch left","Punch right","Prone","Lie","Wave",
+                    "Kusshin", "Push up"};
 
 void connect_WiFi(){
     WiFi.disconnect(true);
